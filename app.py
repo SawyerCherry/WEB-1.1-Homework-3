@@ -55,8 +55,14 @@ def compliments():
 @app.route('/compliments_results')
 def compliments_results():
     """Show the user some compliments."""
+    num_compliments = int(request.args.get('num_compliments'))
+
+    select_compliments = random.sample(list_of_compliments, num_compliments)
+
     context = {
-        # TODO: Enter your context variables here.
+        'users_name' : request.args.get('users_name'),
+        'wants_compliments' : request.args.get('wants_compliments'),
+        'select_compliments': select_compliments
     }
 
     return render_template('compliments_results.html', **context)
@@ -78,12 +84,15 @@ animal_to_fact = {
 def animal_facts():
     """Show a form to choose an animal and receive facts."""
 
-    # TODO: Collect the form data and save as variables
+    user_animal = request.args.get('animal')
+    selected_animal = animal_to_fact.get(user_animal)
 
     context = {
         # TODO: Enter your context variables here for:
         # - the list of all animals (get from animal_to_fact)
+        'animal_to_fact': animal_to_fact.keys(),
         # - the chosen animal fact (may be None if the user hasn't filled out the form yet)
+        'selected_animal': selected_animal
     }
     return render_template('animal_facts.html', **context)
 
@@ -134,32 +143,36 @@ def image_filter():
         
         # TODO: Get the user's chosen filter type (whichever one they chose in the form) and save
         # as a variable
+        users_chosen_filter = request.form.get('filter_type')
         # HINT: remember that we're working with a POST route here so which requests function would you use?
-        filter_type = ''
-        
         # Get the image file submitted by the user
         image = request.files.get('users_image')
-
         # TODO: call `save_image()` on the image & the user's chosen filter type, save the returned
         # value as the new file path
-
+        img_file_path = save_image(image, users_chosen_filter)
         # TODO: Call `apply_filter()` on the file path & filter type
-
+        apply_filter(img_file_path, users_chosen_filter)
         image_url = f'./static/images/{image.filename}'
 
         context = {
-            # TODO: Add context variables here for:
+             # TODO: Add context variables here for:
             # - The full list of filter types
+            'filter_types' : filter_types,
             # - The image URL
+            'image_url' : image_url
         }
 
         return render_template('image_filter.html', **context)
 
     else: # if it's a GET request
+
         context = {
             # TODO: Add context variable here for the full list of filter types
+            'filter_types': filter_types
         }
+
         return render_template('image_filter.html', **context)
+
 
 
 ################################################################################
@@ -179,20 +192,28 @@ def gif_search():
     if request.method == 'POST':
         # TODO: Get the search query & number of GIFs requested by the user, store each as a 
         # variable
+        
+        search_query = request.form.get('search_query')
+        num_of_gifs = request.form.get('quantity')
 
         response = requests.get(
             TENOR_URL,
             {
                 # TODO: Add in key-value pairs for:
                 # - 'q': the search query
+                'q' : search_query,
                 # - 'key': the API key (defined above)
+                'key' : API_KEY,
                 # - 'limit': the number of GIFs requested
+                'limit' : num_of_gifs
             })
 
         gifs = json.loads(response.content).get('results')
+        
+        
 
         context = {
-            'gifs': gifs
+            'gifs': gifs,
         }
 
         # Uncomment me to see the result JSON!
